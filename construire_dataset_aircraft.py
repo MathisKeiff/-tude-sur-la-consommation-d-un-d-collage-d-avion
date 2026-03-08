@@ -1,13 +1,6 @@
-#Création des dataframe avec les variables qui nous intéresse la dernière
-#variable représente le vol ("records_XX")
-
-#NOTE  : le vol numéro 702 de aircraft1 a été ignorés car il manque les catégories :
-# "block0_items", "block0_values"
-
 import h5py
 import pandas as pd
 import numpy as np
-
 
 
 set_variable_a_garder = [
@@ -23,46 +16,76 @@ set_variable_a_garder = [
 "T2_1 [deg C]","T2_2 [deg C]","T3_1 [deg C]","T3_2 [deg C]","T5_1 [deg C]","T5_2 [deg C]"
 ]
 
-def construire_dataset_aircraft(h5_path, set_variable_a_garder, csv_output=None):
-
+def construire_dataset_aircraft(h5_path, set_variable_a_garder, nom_csv = None):
+    
     Aircraft = h5py.File(h5_path, "r")
-
+    
     liste_vols = []
-    records_ignores = []
+    vol_ignore = []
 
+    elem_record = ["axis0", "axis1", "block0_values"]
+
+    #Création d'une variable pour ignorer les vols qui ne sont pas pris en compte
+    ignore = False
     for record_name in Aircraft.keys():
-
+        
         record = Aircraft[record_name]
 
-        if not all(k in record.keys() for k in ["axis0", "axis1", "block0_values"]):
-            records_ignores.append(record_name)
+        #Vérification que tous les éléments pour l'étude du vol record_XX sont présents
+        #si il manque un seul des 3 éléments le vol n'est pas pris en compte
+        for elem in elem_record:
+            if not(elem in record.keys()):
+                vol_ignore.append(record_name)
+                ignore = True
+                break
+        
+        if ignore:
+            ignore = False
             continue
-
+        
         axis0 = record["axis0"][:]
         axis1 = record["axis1"][:]
-        values = record["block0_values"][:]
+        values = record["block0_values"][:] #équivalent à [:,:]
 
-        colonnes = [x.decode("utf-8") if isinstance(x, bytes) else str(x) for x in axis0]
 
-        df_vol = pd.DataFrame(values, columns=colonnes, index=axis1)
+        colonne = []
+        for variable_name in axis0:
+            colonne.append(variable_name.decode("utf-8"))
+        
+        df = pd.DataFrame(values, columns=colonne, index=axis1)
+        
+        #vérification que toute les variables ciblé sont présente dans le 
+        #dataframe que l'on a créé
+        for var in set_variable_a_garder:
+            if not(var in df.columns):
+                vol_ignore.append(record_name)
+                ignore = True
+                break
+        if ignore:
+            ignore = False
+            continue
 
-        colonnes_presentes = [col for col in set_variable_a_garder if col in df_vol.columns]
+        df_cible = df[set_variable_a_garder].copy()
+        #ajout d'une colonne pour savoir sur qu'elle vol nous sommes
+        df_cible["record"] = record_name
 
-        df_vol_reduit = df_vol[colonnes_presentes].copy()
-        df_vol_reduit["record"] = record_name
-
-        liste_vols.append(df_vol_reduit)
-
+        liste_vols.append(df_cible)
+    
+    #fusionner tous les DataFrames pour en avoir qu'un seul
     dataset = pd.concat(liste_vols, ignore_index=True)
 
     print("Dataset créé :", dataset.shape)
-    print("Records ignorés :", records_ignores)
+    print("Records ignorés :", vol_ignore)
 
-    if csv_output is not None:
-        dataset.to_csv(csv_output, index=False)
+    #création du fichier csv
+    if nom_csv is not None:
+        dataset.to_csv(nom_csv, index=False)
 
 
 
+
+
+#Création des trois csv
 construire_dataset_aircraft("archive/Aircraft_01.h5",set_variable_a_garder,
 "dataset_aircraft1.csv")
 construire_dataset_aircraft("archive/Aircraft_02.h5",set_variable_a_garder,

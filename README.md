@@ -11,6 +11,7 @@ block0_items: contient la même chose que axis0 j'ai l'impression
 
 block0_values : matrice de taille (size(axis1),size(axis0)) contenant toutes les valeurs
 
+blockX_values regroupe les colonnes de même type dans des blocs (int, float, etc..) ici il n'y a qu'un seul type (block0_values) donc axis0 = block0_values
 
 les différentes données dont ont a accès:
 'ALT [ft]'
