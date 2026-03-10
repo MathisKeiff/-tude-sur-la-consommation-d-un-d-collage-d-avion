@@ -187,3 +187,28 @@ T5 → Température après la turbine
 T5_1 [deg C]
 
 T5_2 [deg C]
+
+
+
+Définition et caractérisation de la phase de montée 
+
+Analyse préliminaire des profils de montée
+
+Afin d’obtenir une première vision des profils de montée, nous avons représenté sur un même graphique les trajectoires d’altitude de cinq vols différents, normalisées de manière à ce que chaque vol débute au point 
+(0,0)
+(0,0). Cette normalisation permet de comparer plus facilement les formes de montée indépendamment de l’altitude initiale ou du moment exact du décollage.
+
+L’observation de ces profils met en évidence deux comportements principaux de montée.
+
+Le premier correspond à une montée continue, dans laquelle l’altitude augmente de manière relativement régulière jusqu’à atteindre l’altitude de croisière.
+
+Le second type de profil présente l’apparition d’un palier intermédiaire, durant lequel l’avion stabilise temporairement son altitude avant de reprendre sa montée vers l’altitude finale.
+
+
+Dans la suite de l’étude, il pourra donc être pertinent de séparer les vols en deux catégories :
+
+les vols présentant une montée continue sans palier,
+
+les vols présentant un ou plusieurs paliers intermédiaires.
+
+Cette classification permettra d’analyser plus finement les stratégies de montée et d’adapter les méthodes d’étude aux différents types de profils observés.

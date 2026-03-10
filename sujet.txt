@@ -24,7 +24,7 @@ Déroulement du projet :
 0) passer en format numérique les données
 1) affichage courbe altitude
 2) idée pour simplification : choisir un intervalle et prendre les vols ou il y a forcément une montée dans cette intervalle
-3) avoir une idée concrète d'identification de précense ou non de palier 
+3) avoir une idée concrète d'identification de présense ou non de palier 
 4) créer 2 classes vol avac ou sans palier
 5) créer les variable d'analyse
 6) faire une analyse pour mettre en évidence différente classes vols (montée agressive, montée modérée, montée progressive)

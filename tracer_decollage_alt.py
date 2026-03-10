@@ -1,74 +1,93 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 def tracer_decollage_alt(
-        fichier_parquet,
-        alt_max=None,
-        t_max=None,
-        seuil_detection=5,
-        max_vols=None
-    ):
+    fichier_parquet,
+    alt_max=None,
+    t_max=None,
+    seuil_detection=5,
+    max_vols=None
+):
     """
-    Trace les profils de décollage (ALT) pour tous les vols.
+    Trace les profils de décollage (ALT) pour tous les vols,
+    en normalisant chaque courbe pour qu'elle commence en (0, 0).
 
-    paramètres
+    Paramètres
     ----------
     fichier_parquet : str
-        chemin du dataset parquet
+        Chemin du dataset parquet.
 
     alt_max : float ou None
-        altitude max pour couper la courbe (ex: 3000 ft)
+        Altitude max après normalisation pour couper la courbe
+        (ex: 3000 ft).
 
     t_max : int ou None
-        nombre de points après décollage
+        Nombre max de points après décollage.
 
     seuil_detection : float
-        seuil de montée d'altitude pour détecter le décollage
+        Seuil de variation d'altitude pour détecter le décollage.
 
     max_vols : int ou None
-        nombre maximum de vols à tracer (None = tous)
+        Nombre maximum de vols à tracer (None = tous).
     """
 
     df = pd.read_parquet(fichier_parquet)
 
-    plt.figure(figsize=(10,6))
+    plt.figure(figsize=(10, 6))
 
-    # sélection des vols
     vols = list(df["record"].unique())
     if max_vols is not None:
-        vols = vols[:max_vols]  # ne garder que les premiers max_vols
+        vols = vols[:max_vols]
+
+    nb_traces = 0
 
     for record in vols:
         df_vol = df[df["record"] == record].copy()
 
-        # détection du décollage
-        dalt = df_vol["ALT [ft]"].diff()
-        idx_takeoff = dalt[dalt > seuil_detection].index
+        # sécurité : trier si jamais l'ordre n'est pas garanti
+        df_vol = df_vol.reset_index(drop=True)
 
-        if len(idx_takeoff) == 0:
+        if len(df_vol) < 2:
             continue
 
-        idx_takeoff = idx_takeoff[0]
+        # variation d'altitude
+        dalt = df_vol["ALT [ft]"].diff()
 
-        # temps relatif
-        df_vol["t_rel"] = range(len(df_vol))
-        df_vol["t_rel"] = df_vol["t_rel"] - df_vol.loc[idx_takeoff, "t_rel"]
+        # premier point où la montée devient significative
+        idx_takeoff_list = dalt[dalt > seuil_detection].index
+
+        if len(idx_takeoff_list) == 0:
+            continue
+
+        idx_takeoff = idx_takeoff_list[0]
+
+        # temps relatif : 0 au décollage
+        df_vol["t_rel"] = np.arange(len(df_vol)) - idx_takeoff
+
+        # altitude relative : 0 au décollage
+        alt_takeoff = df_vol.loc[idx_takeoff, "ALT [ft]"]
+        df_vol["alt_rel"] = df_vol["ALT [ft]"] - alt_takeoff
 
         # garder uniquement après décollage
-        df_vol = df_vol[df_vol["t_rel"] >= 0]
+        df_vol = df_vol[df_vol["t_rel"] >= 0].copy()
 
-        # limiter altitude
+        # limiter l'altitude relative
         if alt_max is not None:
-            df_vol = df_vol[df_vol["ALT [ft]"] <= alt_max]
+            df_vol = df_vol[df_vol["alt_rel"] <= alt_max]
 
-        # limiter durée
+        # limiter la durée
         if t_max is not None:
             df_vol = df_vol[df_vol["t_rel"] <= t_max]
 
-        plt.plot(df_vol["t_rel"], df_vol["ALT [ft]"], alpha=0.3)
+        if df_vol.empty:
+            continue
+
+        plt.plot(df_vol["t_rel"], df_vol["alt_rel"], alpha=0.3)
+        nb_traces += 1
 
     plt.xlabel("Temps relatif au décollage")
-    plt.ylabel("Altitude (ft)")
-    plt.title("Profils de décollage")
-    plt.grid()
+    plt.ylabel("Altitude relative (ft)")
+    plt.title(f"Profils de décollage normalisés ({nb_traces} vols)")
+    plt.grid(True)
     plt.show()
