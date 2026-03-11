@@ -90,4 +90,5 @@ def tracer_decollage_alt(
     plt.ylabel("Altitude relative (ft)")
     plt.title(f"Profils de décollage normalisés ({nb_traces} vols)")
     plt.grid(True)
-    plt.show()
+    plt.show(block=True)
+    plt.close('all')
