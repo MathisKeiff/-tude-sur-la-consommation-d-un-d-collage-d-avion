@@ -70,7 +70,7 @@ def construire_dataset_aircraft(h5_path, set_variable_a_garder, nom_parquet = No
         for col in df_cible.columns:
             df_cible[col] = pd.to_numeric(df_cible[col], errors="coerce")
 
-        #optionnel : réduire la taille mémoire
+        #réduire la taille mémoire
         df_cible = df_cible.astype("float32")
 
         #ajout d'une colonne pour savoir sur qu'elle vol nous sommes
@@ -88,8 +88,6 @@ def construire_dataset_aircraft(h5_path, set_variable_a_garder, nom_parquet = No
     #création du fichier
     if nom_parquet is not None:
         dataset.to_parquet(nom_parquet, index=False)
-        # si tu veux compression :
-        # dataset.to_parquet(nom_parquet, index=False, compression="snappy")
     
     Aircraft.close()
     
