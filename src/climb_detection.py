@@ -193,42 +193,42 @@ def determination_profils_rapide(
     print("Sans palier :", df_sans_palier_final['record'].nunique() if not df_sans_palier_final.empty else 0)
 
 
-# appel de la fonction
-determination_profils_rapide(
-    fichier_parquet="dataset_aircraft1.parquet",
-    taille_echantillon = 10,
-    seuil_alt_min = 1000,
-    seuil_stabilite=80,
-    seuil_reprise=200,
-    point_P=10,
-    point_M=30,
-    point_G=200,
-    nom_parquet_avec_palier="vols_avec_palier1.parquet",
-    nom_parquet_sans_palier="vols_sans_palier1.parquet"
-)
+def run_climb_detection():
+    determination_profils_rapide(
+        fichier_parquet="data/raw/dataset_aircraft1.parquet",
+        taille_echantillon=10,
+        seuil_alt_min=1000,
+        seuil_stabilite=80,
+        seuil_reprise=200,
+        point_P=10,
+        point_M=30,
+        point_G=200,
+        nom_parquet_avec_palier="data/processed/vols_avec_palier1.parquet",
+        nom_parquet_sans_palier="data/processed/vols_sans_palier1.parquet"
+    )
 
-determination_profils_rapide(
-    fichier_parquet="dataset_aircraft2.parquet",
-    taille_echantillon = 10,
-    seuil_alt_min = 1000,
-    seuil_stabilite=80,
-    seuil_reprise=200,
-    point_P=10,
-    point_M=30,
-    point_G=200,
-    nom_parquet_avec_palier="vols_avec_palier2.parquet",
-    nom_parquet_sans_palier="vols_sans_palier2.parquet"
-)
+    determination_profils_rapide(
+        fichier_parquet="data/raw/dataset_aircraft2.parquet",
+        taille_echantillon=10,
+        seuil_alt_min=1000,
+        seuil_stabilite=80,
+        seuil_reprise=200,
+        point_P=10,
+        point_M=30,
+        point_G=200,
+        nom_parquet_avec_palier="data/processed/vols_avec_palier2.parquet",
+        nom_parquet_sans_palier="data/processed/vols_sans_palier2.parquet"
+    )
 
-determination_profils_rapide(
-    fichier_parquet="dataset_aircraft3.parquet",
-    taille_echantillon = 10,
-    seuil_alt_min = 1000,
-    seuil_stabilite=80,
-    seuil_reprise=200,
-    point_P=10,
-    point_M=30,
-    point_G=200,
-    nom_parquet_avec_palier="vols_avec_palier3.parquet",
-    nom_parquet_sans_palier="vols_sans_palier3.parquet"
-)
+    determination_profils_rapide(
+        fichier_parquet="data/raw/dataset_aircraft3.parquet",
+        taille_echantillon=10,
+        seuil_alt_min=1000,
+        seuil_stabilite=80,
+        seuil_reprise=200,
+        point_P=10,
+        point_M=30,
+        point_G=200,
+        nom_parquet_avec_palier="data/processed/vols_avec_palier3.parquet",
+        nom_parquet_sans_palier="data/processed/vols_sans_palier3.parquet"
+    )

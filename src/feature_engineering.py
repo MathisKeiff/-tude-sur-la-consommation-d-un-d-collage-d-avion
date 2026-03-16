@@ -2,15 +2,15 @@ import pandas as pd
 
 
 fichiers_avec_palier = [
-    "vols_avec_palier1.parquet",
-    "vols_avec_palier2.parquet",
-    "vols_avec_palier3.parquet"
+    "data/processed/vols_avec_palier1.parquet",
+    "data/processed/vols_avec_palier2.parquet",
+    "data/processed/vols_avec_palier3.parquet"
 ]
 
 fichiers_sans_palier = [
-    "vols_sans_palier1.parquet",
-    "vols_sans_palier2.parquet",
-    "vols_sans_palier3.parquet"
+    "data/processed/vols_sans_palier1.parquet",
+    "data/processed/vols_sans_palier2.parquet",
+    "data/processed/vols_sans_palier3.parquet"
 ]
 
 #Objectif : Lire et concatener les trois fichiers avec palier ensemble 
@@ -78,17 +78,31 @@ def calcul_variables_montee(df_vol):
         'EGT_moyen': EGT_moyen
     })
 
-#Création du DF contenant les variables d'analyse vols par vols 
-df_avec_agg = pd.DataFrame([calcul_variables_montee(df_vol) 
-                            for _, df_vol in df_avec.groupby('record_clean', sort=False)])
-df_sans_agg = pd.DataFrame([calcul_variables_montee(df_vol) 
-                            for _, df_vol in df_sans.groupby('record_clean', sort=False)])
 
+def run_feature_engineering():
+    df_avec = lire_et_preparer(fichiers_avec_palier)
+    df_sans = lire_et_preparer(fichiers_sans_palier)
 
-df_avec_agg.to_parquet("variables_montee_avec_palier.parquet", index=False)
-df_sans_agg.to_parquet("variables_montee_sans_palier.parquet", index=False)
+    df_avec_agg = pd.DataFrame([
+        calcul_variables_montee(df_vol)
+        for _, df_vol in df_avec.groupby("record_clean", sort=False)
+    ])
 
+    df_sans_agg = pd.DataFrame([
+        calcul_variables_montee(df_vol)
+        for _, df_vol in df_sans.groupby("record_clean", sort=False)
+    ])
 
-print("✅ Extraction terminée !")
-print(f"Vols avec palier : {df_avec_agg.shape[0]}")
-print(f"Vols sans palier : {df_sans_agg.shape[0]}")
+    df_avec_agg.to_parquet(
+        "data/processed/variables_montee_avec_palier.parquet",
+        index=False
+    )
+
+    df_sans_agg.to_parquet(
+        "data/processed/variables_montee_sans_palier.parquet",
+        index=False
+    )
+
+    print("✅ Extraction terminée !")
+    print(f"Vols avec palier : {df_avec_agg.shape[0]}")
+    print(f"Vols sans palier : {df_sans_agg.shape[0]}")

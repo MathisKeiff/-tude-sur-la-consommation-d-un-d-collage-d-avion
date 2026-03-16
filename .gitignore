@@ -6,3 +6,6 @@ archive/
 *.csv
 *.parquet
 *.h5
+
+
+data/raw/*

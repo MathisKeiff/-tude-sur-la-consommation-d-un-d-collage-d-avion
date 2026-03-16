@@ -96,7 +96,19 @@ def construire_dataset_aircraft(h5_path, set_variable_a_garder, nom_parquet = No
 
 
 
-#Création des trois csv
-construire_dataset_aircraft("archive/Aircraft_01.h5", set_variable_a_garder, "dataset_aircraft1.parquet")
-construire_dataset_aircraft("archive/Aircraft_02.h5", set_variable_a_garder, "dataset_aircraft2.parquet")
-construire_dataset_aircraft("archive/Aircraft_03.h5", set_variable_a_garder, "dataset_aircraft3.parquet")
+def run_aircraft_dataset_builder():
+    construire_dataset_aircraft(
+        "data/raw/archive/Aircraft_01.h5",
+        set_variable_a_garder,
+        "data/raw/dataset_aircraft1.parquet"
+    )
+    construire_dataset_aircraft(
+        "data/raw/archive/Aircraft_02.h5",
+        set_variable_a_garder,
+        "data/raw/dataset_aircraft2.parquet"
+    )
+    construire_dataset_aircraft(
+        "data/raw/archive/Aircraft_03.h5",
+        set_variable_a_garder,
+        "data/raw/dataset_aircraft3.parquet"
+    )

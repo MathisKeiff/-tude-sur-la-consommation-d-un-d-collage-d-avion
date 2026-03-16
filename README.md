@@ -1,334 +1,436 @@
-Chaque dataset contient 1000 vols "record_XX"
+# Étude de la consommation en montée d'un avion
 
+## Description du projet
 
-Un vol contient 4 éléments : "axis0", "axis1", "block0_items", "block0_values"
+Ce projet vise à analyser la **consommation de carburant durant la phase de montée d’un avion** à partir de données de vol enregistrées.
 
-axis0 : contient le nom des toutes les cases de l'axe 0 (55)
+Les objectifs principaux sont :
 
-axis1 : pareil pour l'axe 1 (7429)
+- détecter automatiquement les phases de montée
+- distinguer deux types de profils :
+  - montée continue
+  - montée avec palier intermédiaire
+- construire des variables synthétiques décrivant chaque montée
+- analyser statistiquement les différences entre ces profils
 
-block0_items: contient la même chose que axis0 j'ai l'impression
+Les méthodes utilisées incluent :
 
-block0_values : matrice de taille (size(axis1),size(axis0)) contenant toutes les valeurs
+- statistiques descriptives
+- visualisations
+- analyse en composantes principales (PCA)
+- clustering (K-Means)
 
-blockX_values regroupe les colonnes de même type dans des blocs (int, float, etc..) ici il n'y a qu'un seul type (block0_values) donc axis0 = block0_values
+---
 
-les différentes données dont ont a accès:
-'ALT [ft]'
-'EGT_1 [deg C]'
-'EGT_2 [deg C]'
-'FMV_1 [mm]'
-'FMV_2 [mm]'
-'HPTACC_1 [%]'
-'HPTACC_2 [%]'
-'M [Mach]'
-'N1_1 [% rpm]'
-'N1_2 [% rpm]'
-'N2_1 [% rpm]'
-'N2_2 [% rpm]'
-'NAIV_1 [bool]'
-'NAIV_2 [bool]'
-'P0_1 [psia]'
-'P0_2 [psia]'
-'PRV_1 [bool]'
-'PRV_2 [bool]'
-'PS3_1 [psia]'
-'PS3_2 [psia]'
-'PT2_1 [mbar]'
-'PT2_2 [mbar]'
-'P_OIL_1 [psi]'
-'P_OIL_2 [psi]'
-'Q_1 [lb/h]'
-'Q_2 [lb/h]'
-'T1_1 [deg C]'
-'T1_2 [deg C]'
-'T2_1 [deg C]'
-'T2_2 [deg C]'
-'T3_1 [deg C]'
-'T3_2 [deg C]'
-'T5_1 [deg C]'
-'T5_2 [deg C]'
-'TAT [deg C]'
-'TBV_1 [%]'
-'TBV_2 [%]'
-'TCASE_1 [deg C]'
-'TCASE_2 [deg C]'
-'TLA_1 [deg]'
-'TLA_2 [deg]'
-'T_OIL_1 [deg C]'
-'T_OIL_2 [deg C]'
-'VBV_1 [mm]'
-'VBV_2 [mm]'
-'VIB_AN1_1 [mils]'
-'VIB_AN1_2 [mils]'
-'VIB_AN2_1 [ips]'
-'VIB_AN2_2 [ips]'
-'VIB_BN1_1 [mils]'
-'VIB_BN1_2 [mils]'
-'VIB_BN2_1 [ips]'
-'VIB_BN2_2 [ips]'
-'VSV_1 [mm]'
-'VSV_2 [mm]'
+# Dataset
 
+Les données utilisées dans ce projet **ne sont pas incluses dans le repository GitHub** en raison de leur taille.
 
+Le dataset peut être téléchargé depuis Kaggle :
 
-explication i : engine station from 0 before fan to 5 after nozzle
+https://www.kaggle.com/datasets/jrmlac/dfdr1000?resource=download
 
-L’air traverse le moteur dans cet ordre : 
+## Installation des données
 
-Entrée d’air → Fan → Compresseur → Chambre de combustion → Turbine → Tuyère
+1. Télécharger l’archive du dataset depuis Kaggle.
 
+2. Placer l’archive téléchargée dans le dossier suivant du projet :
 
-Le fan accélère l’air et commence légèrement à le comprimer.
+```
+data/raw/
+```
 
-Le compresseur augmente fortement la pression et la température de l’air avant la combustion.
+3. Décompresser l’archive afin d’obtenir la structure suivante :
 
-La turbine récupère l’énergie des gaz chauds pour faire tourner le compresseur et le fan.
+```
+data/
+ ├── raw
+ │   └── archive
+ │       ├── Aircraft_01.h5
+ │       ├── Aircraft_02.h5
+ │       └── Aircraft_03.h5
+```
 
+Ces fichiers `.h5` contiennent les données brutes des vols et sont utilisés par le pipeline de traitement.
 
-Station 0 : Avant l’entrée du moteur
+---
 
-Station 1 : entrée du fan
+Une fois les données installées, le projet peut être exécuté avec :
 
-Station 2 : Après le fan / entrée du compresseur
+```
+python main.py
+```
 
-Station 3 : Après le compresseur
+---
 
-Station 4 : Après la chambre de combustion
+# Structure du projet
 
-Station 5 : Après la turbine
+```
+project/
+│
+├── data
+│   ├── raw
+│   │   └── archive
+│   │       ├── Aircraft_01.h5
+│   │       ├── Aircraft_02.h5
+│   │       └── Aircraft_03.h5
+│   │
+│   └── processed
+│       ├── vols_avec_palier.parquet
+│       ├── vols_sans_palier.parquet
+│       ├── variables_montee_avec_palier.parquet
+│       └── variables_montee_sans_palier.parquet
+│
+├── src
+│   ├── aircraft_dataset_builder.py
+│   ├── climb_detection.py
+│   ├── feature_engineering.py
+│   ├── analysis.py
+│   └── visualization.py
+│
+├── main.py
+├── requirements.txt
+└── README.md
+```
 
+---
 
+# Structure des données
 
-CHOIX des variables à garder :
+Chaque dataset contient environ **1000 vols**, identifiés sous la forme :
 
+```
+record_XX
+```
 
-le débit de carburant instantané des deux moteurs:
+Les données sont stockées au format **HDF5**.
 
-Q_1 [lb/h] Fuel flow
+Chaque vol contient quatre éléments :
 
+| Élément | Description |
+|------|------|
+| axis0 | noms des variables (55 capteurs) |
+| axis1 | index temporel (~7429 points) |
+| block0_items | équivalent de axis0 |
+| block0_values | matrice contenant toutes les valeurs |
+
+La matrice `block0_values` est de taille :
+
+```
+(size(axis1), size(axis0))
+```
+
+Elle contient toutes les valeurs des capteurs.
+
+Les données sont regroupées par type numérique dans des blocs (`blockX_values`).  
+Dans ce dataset, il n'existe qu’un seul bloc (`block0_values`).
+
+---
+
+# Variables disponibles
+
+Les données contiennent différentes catégories de variables.
+
+## Variables moteur
+
+### Débit carburant
+
+```
+Q_1 [lb/h]
 Q_2 [lb/h]
+```
 
+### Température turbine
 
-
-Variables de puissance moteur:
-
-EGT → température turbine (charge moteur)
-
-EGT_1 [deg C] Exhaust Gaz Temperature
-
+```
+EGT_1 [deg C]
 EGT_2 [deg C]
+```
 
+### Régime moteur
 
-N1 / N2 → régime moteur
-
-N1_1 [% rpm] Speed of secondary shaft (fan)
-
+```
+N1_1 [% rpm]
 N1_2 [% rpm]
 
-N2_1 [% rpm] Speed of primary shaft (core)
-
+N2_1 [% rpm]
 N2_2 [% rpm]
+```
 
+### Position des manettes de poussée
 
-TLA → position de la manette des gaz
-
-TLA_1 [deg] Level Angle
-
+```
+TLA_1 [deg]
 TLA_2 [deg]
+```
 
+---
 
+## Variables environnementales
 
-Variables environnementales:
+```
+ALT [ft]   Altitude
+M [Mach]   Vitesse relative au son
+TAT [deg C] Température de l’air
+```
 
-ALT [ft] Altitude
+---
 
-M [Mach] Vitesse
+## Pressions moteur
 
-TAT [deg C] Température
-
-
-
-Pressions du moteur:
-
-PS3 → pression statique après le compresseur
-
-PS3_1 [psia] Static pressure
-
+```
+PS3_1 [psia]
 PS3_2 [psia]
 
-
-PT2 → pression totale après le fan
-
-PT2_1 [mbar] Pressure
-
+PT2_1 [mbar]
 PT2_2 [mbar]
+```
 
+---
 
+## Températures internes moteur
 
-Températures internes du moteur:
-
-T2 → Température après le fan
-
+```
 T2_1 [deg C]
-
 T2_2 [deg C]
 
-
-T3 → Température après le compresseur
-
 T3_1 [deg C]
-
 T3_2 [deg C]
 
-
-T5 → Température après la turbine
-
 T5_1 [deg C]
-
 T5_2 [deg C]
+```
 
+---
 
+# Stations moteur
 
-Définition et caractérisation de la phase de montée 
+Les indices correspondent aux stations du moteur.
 
-Analyse préliminaire des profils de montée
+L’air traverse le moteur dans l’ordre suivant :
 
-Afin d’obtenir une première vision des profils de montée, nous avons représenté sur un même graphique les trajectoires d’altitude de cinq vols différents, normalisées de manière à ce que chaque vol débute au point 
+```
+Entrée d’air → Fan → Compresseur → Chambre de combustion → Turbine → Tuyère
+```
+
+| Station | Description |
+|------|------|
+| 0 | Avant l'entrée du moteur |
+| 1 | Entrée du fan |
+| 2 | Après le fan |
+| 3 | Après le compresseur |
+| 4 | Après la chambre de combustion |
+| 5 | Après la turbine |
+
+---
+
+# Détection de la phase de montée
+
+## Analyse préliminaire
+
+Pour visualiser les profils de montée, plusieurs trajectoires d’altitude ont été représentées sur un même graphique.
+
+Chaque vol est **normalisé** pour commencer au point :
+
+```
 (0,0)
-(0,0). Cette normalisation permet de comparer plus facilement les formes de montée indépendamment de l’altitude initiale ou du moment exact du décollage.
+```
 
-L’observation de ces profils met en évidence deux comportements principaux de montée.
+Cela permet de comparer les formes de montée indépendamment de l’altitude initiale.
 
-Le premier correspond à une montée continue, dans laquelle l’altitude augmente de manière relativement régulière jusqu’à atteindre l’altitude de croisière.
+Deux comportements principaux apparaissent :
 
-Le second type de profil présente l’apparition d’un palier intermédiaire, durant lequel l’avion stabilise temporairement son altitude avant de reprendre sa montée vers l’altitude finale.
+### Montée continue
 
+L’altitude augmente régulièrement jusqu’à l’altitude de croisière.
 
-Dans la suite de l’étude, il pourra donc être pertinent de séparer les vols en deux catégories :
+### Montée avec palier
 
-les vols présentant une montée continue sans palier,
+Un palier intermédiaire apparaît avant la reprise de la montée.
 
-les vols présentant un ou plusieurs paliers intermédiaires.
+---
 
-Cette classification permettra d’analyser plus finement les stratégies de montée et d’adapter les méthodes d’étude aux différents types de profils observés.
+# Algorithme de détection des paliers
 
+L’algorithme repose sur l’analyse de l’évolution de l’altitude à l’aide de **fenêtres glissantes**.
 
-Afin de réaliser cette séparation, plusieurs étapes de tri ont été mises en place. L’idée générale repose sur l’identification de phases de stabilisation de l’altitude au cours de la montée. Pour cela, l’algorithme analyse l’évolution de l’altitude à l’aide de fenêtres glissantes contenant un nombre fixe de points consécutifs. Lorsque la variation d’altitude à l’intérieur d’une fenêtre reste inférieure à un certain seuil, cette phase est considérée comme une candidate à un palier.
+### Paramètres utilisés
 
-Toutefois, une altitude stable peut également correspondre au début de la phase de croisière. Afin de distinguer ces deux situations, l’algorithme examine également plusieurs points situés plus loin dans le temps. Si l’altitude augmente de manière significative après la fenêtre stable, la phase est interprétée comme un palier intermédiaire suivi d’une reprise de montée. En revanche, si aucune reprise de montée n’est observée, la stabilisation est considérée comme correspondant à la fin de la montée et au début de la phase de croisière.
+| Paramètre | Valeur | Description |
+|------|------|------|
+| Taille fenêtre | 10 points | ≈ 10 secondes |
+| Seuil stabilité | 80 ft | variation max altitude |
+| Seuil reprise | 200 ft | reprise significative de montée |
+| Points futurs | 10, 30, 200 | vérification reprise montée |
 
-Avant de mettre en place cette méthode, il a été nécessaire d’estimer l’intervalle temporel séparant deux mesures successives. Pour cela, un vol présentant une montée continue sans palier a été isolé et analysé. L’étude de la variation d’altitude entre deux points consécutifs a montré une variation moyenne d’environ :
+### Détection du début de montée
 
-ΔALT≈37 ft
+```
+ALT(t0 + 5) − ALT(t0) > seuil
+```
 
-Cette valeur est cohérente avec les taux de montée typiques d’un avion de ligne (de l’ordre de 1500 à 2500 ft/min) et suggère que les données sont échantillonnées à une fréquence d’environ 1 Hz, soit un point par seconde. Cette information permet d’interpréter directement les indices utilisés dans l’algorithme comme des durées en secondes.
+---
 
-Sur cette base, plusieurs paramètres ont été définis afin de détecter les paliers :
+# Résultats de classification
 
-taille de la fenêtre glissante : 10 points
+## Aircraft 1
 
-soit environ 10 secondes. Une phase est considérée comme potentiellement stable si l’altitude varie très peu sur cette durée. Ce choix permet de filtrer les fluctuations très courtes dues au bruit de mesure tout en restant suffisamment court pour détecter rapidement un changement de régime. Par ailleurs, les paliers intermédiaires observés lors des montées d’avions durent généralement de plusieurs dizaines de secondes à plusieurs minutes, ce qui rend une fenêtre de 10 secondes adaptée pour détecter le début d’une phase de stabilisation sans risquer de manquer ces paliers.
+| Catégorie | Nombre |
+|------|------|
+Total vols | 1001  
+Pas de décollage | 4  
+Classés | 994  
+Avec palier | 447  
+Sans palier | 550  
 
-seuil de stabilité : 80 ft
+---
 
-la variation maximale d’altitude dans la fenêtre doit rester inférieure à cette valeur pour être considérée comme un plateau potentiel. Étant donné qu’une montée classique d’un avion de ligne correspond à une augmentation d’environ 30 à 40 ft par seconde, une fenêtre de 10 secondes représenterait normalement une variation de 300 à 400 ft en montée continue. Fixer un seuil de 80 ft permet donc d’identifier des phases où l’altitude évolue très peu par rapport à une montée normale, ce qui correspond à une stabilisation caractéristique d’un palier.
+## Aircraft 2
 
-points de vérification futurs : 10, 30 et 200 points
+| Catégorie | Nombre |
+|------|------|
+Total vols | 1002  
+Pas de décollage | 1  
+Classés | 1001  
+Avec palier | 628  
+Sans palier | 373  
 
-correspondant respectivement à environ 10 s, 30 s et 200 s. L’utilisation de plusieurs horizons temporels permet de vérifier si la montée reprend après une phase stable. Les points proches (10 s) permettent de détecter une reprise rapide de montée, tandis que les points plus éloignés (30 s et 200 s) permettent de confirmer qu’il ne s’agit pas simplement d’une fluctuation momentanée. Le point à 200 secondes permet également de vérifier que la stabilisation observée ne correspond pas directement à la phase de croisière.
+---
 
-seuil de reprise de montée : 200 ft
+## Aircraft 3
 
-si l’altitude future dépasse l’altitude de référence de plus de 200 ft, la montée est considérée comme ayant repris. Cette valeur a été choisie afin de dépasser largement les variations d’altitude observées dans un plateau. Une augmentation de 200 ft correspond à plusieurs secondes de montée effective, ce qui permet de distinguer clairement une reprise de montée d’une simple oscillation de l’altitude autour d’une valeur stable.
+| Catégorie | Nombre |
+|------|------|
+Total vols | 1002  
+Pas de décollage | 2  
+Classés | 998  
+Avec palier | 611  
+Sans palier | 389  
 
-Une fois ces paramètres définis, l’algorithme parcourt l’ensemble des vols du dataset. Pour chaque vol, plusieurs vérifications préliminaires sont effectuées afin d’éliminer les cas non exploitables (vols trop courts, absence de décollage ou absence de montée identifiable).
+---
 
-Le début de la montée est défini comme le premier instant t0 tel que :
+# Construction des variables d’analyse
 
-ALT(t0+5)−ALT(t0)>seuil
+Pour chaque vol, plusieurs variables synthétiques sont calculées.
 
-ce qui permet de détecter une augmentation significative de l’altitude sur quelques secondes.
+### Consommation carburant
 
-L’analyse se concentre ensuite sur l’intervalle compris entre ce début de montée et l’altitude maximale atteinte. Les fenêtres glissantes sont utilisées pour identifier les phases de stabilisation. Lorsqu’une fenêtre stable est détectée, l’algorithme vérifie si la montée reprend plus tard dans le profil. Si une reprise de montée est observée, la phase correspond à un palier intermédiaire. Dans le cas contraire, cette stabilisation est interprétée comme le début de la phase de croisière, ce qui marque la fin de la montée.
+```
+carburant_cumule
+```
 
-Ainsi, la fin de montée est définie comme le premier plateau à partir duquel aucune reprise significative de montée n’est observée. Le vol est alors tronqué entre le début de la montée et ce point, puis classé dans la catégorie correspondante : montée avec palier ou montée continue sans palier.
+Somme des débits carburant des deux moteurs sur la montée.
 
-Résumer des 3 fichiers:
-Aircraft 1:
-Total vols : 1001
-Trop courts : 0
-Pas de vrai décollage : 4
-idx_max trop petit : 0
-Pas de début de montée détecté : 0
-Début de montée trop tardif : 0
-Pas classés : 3
-Classés : 994
-Avec palier : 447
-Sans palier : 550
+### Durée de montée
 
-Aircraft2:
-Total vols : 1002
-Trop courts : 0
-Pas de vrai décollage : 1
-idx_max trop petit : 0
-Pas de début de montée détecté : 0
-Début de montée trop tardif : 0
-Pas classés : 0
-Classés : 1001
-Avec palier : 628
-Sans palier : 373
+```
+duree
+```
 
-Aircraft3:
-Total vols : 1002
-Trop courts : 0
-Pas de vrai décollage : 2
-idx_max trop petit : 0
-Pas de début de montée détecté : 0
-Début de montée trop tardif : 0
-Pas classés : 2
-Classés : 998
-Avec palier : 611
-Sans palier : 389
+Nombre de points mesurés (≈ secondes).
 
-Analyse des résultats des différents profils de montée:
-1. Analyse des vols sans palier
-Dans le cas des vols sans palier, les résultats de l’ACP montrent une structure très stable entre les
-trois avions. La première composante principale explique entre 71% et 78% de la variance, tandis
-que la deuxième composante explique entre 14% et 22%. La variance cumulée dépasse 88%, ce
-qui signifie que deux dimensions suffisent à décrire l’essentiel des comportements observés.
-La première dimension est principalement associée aux variables de performance globale : durée
-de montée, Mach moyen, paramètres moteurs (N1, N2), position de manette de poussée (TLA) et
-consommation totale de carburant. La deuxième dimension est fortement dominée par le taux de
-montée.
-Le clustering identifie essentiellement deux groupes : - Un groupe principal correspondant à une
-montée classique avec une durée proche de 950–970 secondes, une vitesse Mach moyenne
-autour de 0.46 et une consommation d’environ 8.7 à 9 millions. - Un groupe très minoritaire
-correspondant à des segments extrêmement courts (durées très faibles). Ces observations
-suggèrent que la majorité des vols suivent une stratégie de montée directe, relativement homogène
-entre les trois avions.
-2. Analyse des vols avec palier
-Lorsque les profils incluent un palier intermédiaire, la structure des données devient plus complexe.
-La première composante principale explique environ 44% à 49% de la variance, tandis que la
-seconde explique environ 33% à 38%. La variance cumulée reste néanmoins proche de 80%.
-Contrairement aux vols sans palier, l’ACP montre ici que la variabilité est répartie entre plusieurs
-facteurs. La durée de montée et la consommation restent importantes, mais les paramètres
-moteurs et la vitesse contribuent également fortement à la seconde dimension.
-Le clustering révèle trois stratégies principales : - Une montée longue avec taux de montée plus
-faible, associée à une consommation élevée. - Une montée plus courte avec un taux de montée
-élevé, associée à une consommation plus faible. - Une stratégie intermédiaire combinant durée et
-paramètres moteurs plus élevés. Ces résultats montrent que la présence d’un palier introduit
-plusieurs stratégies possibles de gestion de la montée.
-3. Comparaison et conclusion
+### Altitude
 
-La comparaison entre les profils avec et sans palier met en évidence plusieurs différences
-importantes. Les montées sans palier sont beaucoup plus homogènes : la majorité des vols suivent
-une stratégie directe avec des paramètres moteurs relativement similaires et une consommation
-proche entre les différents avions. À l’inverse, les profils avec palier présentent une variabilité
-beaucoup plus importante. Le palier intermédiaire introduit différentes stratégies de montée, ce qui
-se traduit par trois groupes distincts dans le clustering. En termes de consommation, les résultats
-suggèrent que les stratégies associées à une durée plus courte et à un taux de montée plus élevé
-sont généralement les plus économes en carburant. Les montées plus longues ou plus
-progressives tendent à augmenter la consommation totale. Globalement, l’analyse montre que la
-gestion de la durée de montée et du taux de montée constitue le facteur le plus déterminant pour
-optimiser la consommation de carburant.
+```
+ALT_init
+ALT_fin
+```
+
+Altitude au début et à la fin de la montée.
+
+### Taux de montée
+
+```
+taux_montee = (ALT_fin − ALT_init) / durée
+```
+
+### Vitesse
+
+```
+Mach_moyen
+```
+
+### Paramètres moteur
+
+```
+N1_moyen
+N2_moyen
+TLA_moyen
+EGT_moyen
+```
+
+---
+
+# Analyse statistique
+
+Les analyses incluent :
+
+- histogrammes
+- boxplots
+- matrices de corrélation
+- analyse en composantes principales (PCA)
+- clustering (KMeans)
+
+---
+
+# Résultats principaux
+
+## Vols sans palier
+
+La première composante principale explique **71 à 78 % de la variance**.
+
+Deux clusters apparaissent :
+
+- montée classique (~950 s)
+- segments très courts (cas rares)
+
+Les montées sans palier sont **très homogènes**.
+
+---
+
+## Vols avec palier
+
+La variance est plus répartie :
+
+- PC1 ≈ 44–49 %
+- PC2 ≈ 33–38 %
+
+Trois stratégies de montée apparaissent :
+
+1. montée longue → consommation élevée  
+2. montée courte → consommation plus faible  
+3. stratégie intermédiaire  
+
+---
+
+# Conclusion
+
+Les montées **sans palier** sont relativement homogènes et suivent une stratégie directe.
+
+Les montées **avec palier** présentent une variabilité beaucoup plus importante.
+
+Les résultats montrent que les paramètres les plus déterminants pour la consommation sont :
+
+- durée de montée
+- taux de montée
+- stratégie de gestion du moteur
+
+Une montée plus courte avec un taux de montée élevé tend à être **plus efficace énergétiquement**.
+
+---
+
+# Lancer le projet
+
+## Installation
+
+```bash
+git clone <repo>
+cd project
+pip install -r requirements.txt
+```
+
+## Exécution
+
+```
+python main.py
+```
