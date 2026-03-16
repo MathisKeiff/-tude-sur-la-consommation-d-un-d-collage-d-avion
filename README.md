@@ -290,3 +290,45 @@ Pas classés : 2
 Classés : 998
 Avec palier : 611
 Sans palier : 389
+
+Analyse des résultats des différents profils de montée:
+1. Analyse des vols sans palier
+Dans le cas des vols sans palier, les résultats de l’ACP montrent une structure très stable entre les
+trois avions. La première composante principale explique entre 71% et 78% de la variance, tandis
+que la deuxième composante explique entre 14% et 22%. La variance cumulée dépasse 88%, ce
+qui signifie que deux dimensions suffisent à décrire l’essentiel des comportements observés.
+La première dimension est principalement associée aux variables de performance globale : durée
+de montée, Mach moyen, paramètres moteurs (N1, N2), position de manette de poussée (TLA) et
+consommation totale de carburant. La deuxième dimension est fortement dominée par le taux de
+montée.
+Le clustering identifie essentiellement deux groupes : - Un groupe principal correspondant à une
+montée classique avec une durée proche de 950–970 secondes, une vitesse Mach moyenne
+autour de 0.46 et une consommation d’environ 8.7 à 9 millions. - Un groupe très minoritaire
+correspondant à des segments extrêmement courts (durées très faibles). Ces observations
+suggèrent que la majorité des vols suivent une stratégie de montée directe, relativement homogène
+entre les trois avions.
+2. Analyse des vols avec palier
+Lorsque les profils incluent un palier intermédiaire, la structure des données devient plus complexe.
+La première composante principale explique environ 44% à 49% de la variance, tandis que la
+seconde explique environ 33% à 38%. La variance cumulée reste néanmoins proche de 80%.
+Contrairement aux vols sans palier, l’ACP montre ici que la variabilité est répartie entre plusieurs
+facteurs. La durée de montée et la consommation restent importantes, mais les paramètres
+moteurs et la vitesse contribuent également fortement à la seconde dimension.
+Le clustering révèle trois stratégies principales : - Une montée longue avec taux de montée plus
+faible, associée à une consommation élevée. - Une montée plus courte avec un taux de montée
+élevé, associée à une consommation plus faible. - Une stratégie intermédiaire combinant durée et
+paramètres moteurs plus élevés. Ces résultats montrent que la présence d’un palier introduit
+plusieurs stratégies possibles de gestion de la montée.
+3. Comparaison et conclusion
+
+La comparaison entre les profils avec et sans palier met en évidence plusieurs différences
+importantes. Les montées sans palier sont beaucoup plus homogènes : la majorité des vols suivent
+une stratégie directe avec des paramètres moteurs relativement similaires et une consommation
+proche entre les différents avions. À l’inverse, les profils avec palier présentent une variabilité
+beaucoup plus importante. Le palier intermédiaire introduit différentes stratégies de montée, ce qui
+se traduit par trois groupes distincts dans le clustering. En termes de consommation, les résultats
+suggèrent que les stratégies associées à une durée plus courte et à un taux de montée plus élevé
+sont généralement les plus économes en carburant. Les montées plus longues ou plus
+progressives tendent à augmenter la consommation totale. Globalement, l’analyse montre que la
+gestion de la durée de montée et du taux de montée constitue le facteur le plus déterminant pour
+optimiser la consommation de carburant.

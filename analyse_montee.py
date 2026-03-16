@@ -79,6 +79,7 @@ def analyse_montee(df):
     # PCA
     # -------------------------------
     print("\n===== PCA et Cercle de corrélation =====")
+
     features = [
         "duree",
         "Mach_moyen",
@@ -88,15 +89,35 @@ def analyse_montee(df):
         "taux_montee",
         "carburant_cumule"
     ]
+
     X = df[features].dropna()
+
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
     pca = PCA(n_components=2)
     components = pca.fit_transform(X_scaled)
 
+    # ----- Variance expliquée -----
+    print("\n===== VARIANCE EXPLIQUEE PAR LES COMPOSANTES =====")
+    print("PC1 :", round(pca.explained_variance_ratio_[0]*100,2), "%")
+    print("PC2 :", round(pca.explained_variance_ratio_[1]*100,2), "%")
+    print("Variance cumulée :", round(pca.explained_variance_ratio_.sum()*100,2), "%")
+
+    # ----- Variables qui définissent les dimensions -----
+    print("\n===== CONTRIBUTION DES VARIABLES AUX DIMENSIONS =====")
+
+    loadings = pd.DataFrame(
+        pca.components_.T,
+        columns=["PC1","PC2"],
+        index=features
+    )
+
+    print(loadings)
+
     # Cercle de corrélation
     correlations = pca.components_.T * np.sqrt(pca.explained_variance_)
+
     plt.figure(figsize=(7,7))
     plt.axhline(0, color='grey', lw=1)
     plt.axvline(0, color='grey', lw=1)
@@ -104,14 +125,18 @@ def analyse_montee(df):
     for i, var in enumerate(features):
         plt.arrow(0, 0, correlations[i,0], correlations[i,1],
                   color='r', alpha=0.7, head_width=0.05)
-        plt.text(correlations[i,0]*1.15, correlations[i,1]*1.15, var, color='b', fontsize=10)
+        plt.text(correlations[i,0]*1.15, correlations[i,1]*1.15, var,
+                 color='b', fontsize=10)
 
     circle = plt.Circle((0,0), 1, color='grey', fill=False)
     plt.gca().add_artist(circle)
+
     plt.xlim(-1,1)
     plt.ylim(-1,1)
-    plt.xlabel('PC1')
-    plt.ylabel('PC2')
+
+    plt.xlabel(f"PC1 ({pca.explained_variance_ratio_[0]*100:.1f}%)")
+    plt.ylabel(f"PC2 ({pca.explained_variance_ratio_[1]*100:.1f}%)")
+
     plt.title("Cercle de corrélation des variables")
     plt.grid(True)
     plt.show()
@@ -120,17 +145,21 @@ def analyse_montee(df):
     # Clustering KMeans
     # -------------------------------
     print("\n===== CLUSTERING KMEANS =====")
-    kmeans = KMeans(n_clusters=3, random_state=0)
+
+    kmeans = KMeans(n_clusters=2, random_state=0)
     clusters = kmeans.fit_predict(X_scaled)
+
     df_cluster = df.loc[X.index].copy()
     df_cluster["cluster"] = clusters
 
     # PCA colorée par cluster
     plt.figure(figsize=(8,6))
     sns.scatterplot(x=components[:,0], y=components[:,1], hue=clusters, palette="Set1")
+
+    plt.xlabel(f"PC1 ({pca.explained_variance_ratio_[0]*100:.1f}%)")
+    plt.ylabel(f"PC2 ({pca.explained_variance_ratio_[1]*100:.1f}%)")
+
     plt.title("Clusters des profils de montée (PCA)")
-    plt.xlabel("PC1")
-    plt.ylabel("PC2")
     plt.show()
 
     # Boxplot consommation par cluster
